@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#E7F7FA">
-  <title>切水果 · 课堂原型</title>
+  <title>切水果 · 课堂版</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -17,9 +17,10 @@
           <path d="M12 22a16 16 0 0 0 32 0Z" fill="#F15B64"/>
           <path d="m20 27 2 4m6-2v5m8-7-2 4" stroke="#173D38" stroke-width="2.6" stroke-linecap="round"/>
         </svg>
-        <div><p class="page-title">切水果 · 课堂原型</p><p class="prototype-label">可交互原型</p></div>
+        <div><p class="page-title">切水果 · 课堂版</p><p class="prototype-label">一步一步，让小手有魔法</p></div>
       </div>
       <div class="header-actions">
+        <button id="inputButton" class="utility-button" type="button">用摄像头玩</button>
         <button id="soundButton" class="utility-button" type="button" aria-pressed="false">音效关</button>
         <button id="fullscreenButton" class="utility-button" type="button">全屏</button>
       </div>
@@ -33,7 +34,8 @@
     </nav>
 
     <section id="fieldWrap" class="playfield-wrap" aria-label="水果互动区域">
-      <canvas id="playfield" tabindex="0" aria-label="移动鼠标预览手指动作，在水果上滑过试一试。">请使用支持 Canvas 的浏览器查看此原型。</canvas>
+      <video id="webcam" class="camera-preview" muted autoplay playsinline hidden></video>
+      <canvas id="playfield" tabindex="0" aria-label="挥动食指或移动鼠标，划过水果。">请使用支持 Canvas 的浏览器查看游戏。</canvas>
       <div class="field-heading">
         <p id="stageEyebrow" class="stage-eyebrow">第一步</p>
         <h1 id="stageTitle">让电脑看见小手</h1>
@@ -42,20 +44,20 @@
       <div id="harvest" class="harvest" hidden aria-label="收获水果数量">
         <span aria-hidden="true">🍉</span><strong id="harvestCount">0</strong><span>个水果</span>
       </div>
-      <p id="modeBadge" class="mode-badge">鼠标预览 · 并非 AI 识别</p>
+      <p id="modeBadge" class="mode-badge">请选择摄像头或鼠标</p>
       <p id="celebration" class="celebration" role="status" aria-live="polite" aria-atomic="true"></p>
 
       <div id="introOverlay" class="intro-overlay">
         <div class="intro-content">
           <div class="welcome-hand" aria-hidden="true">🖐️<span class="spark spark-one">✦</span><span class="spark spark-two">✦</span></div>
           <h2 id="overlayTitle">挥挥手，水果开派对！</h2>
-          <p id="overlayText">先用鼠标扮演小手。<br>我们一起，把游戏一步一步做出来。</p>
+          <p id="overlayText">伸出食指，轻轻划一划。<br>我们一起，把游戏一步一步做出来。</p>
           <div class="overlay-actions">
-            <button id="startButton" class="primary-button" type="button">用鼠标试一试</button>
+            <button id="startButton" class="primary-button" type="button">打开摄像头</button>
             <button id="retryButton" class="primary-button" type="button" hidden>重试</button>
-            <button id="fallbackButton" class="secondary-button" type="button" hidden>用鼠标继续</button>
+            <button id="fallbackButton" class="secondary-button" type="button">用鼠标继续</button>
           </div>
-          <p class="preview-note">这是鼠标操作原型，尚未开启摄像头。</p>
+          <p class="preview-note">相机画面只在本机处理，不拍照、不上传。</p>
         </div>
       </div>
 
@@ -76,36 +78,27 @@
     </nav>
 
     <footer class="page-footer">
-      <p>Zlice 课堂适配方案 · 预先准备的演示步骤</p>
+      <p>Zlice 课堂版 · 预先准备的演示步骤</p>
       <details id="teacherPanel" class="teacher-panel">
         <summary>老师工具</summary>
         <div class="teacher-panel-content">
           <h2>老师工具</h2>
-          <p class="teacher-intro">孩子只看大画面。由老师切换步骤和预览状态。</p>
+          <p class="teacher-intro">孩子只看大画面。由老师切换步骤和帮助下一位小朋友。</p>
           <div class="teacher-settings">
-            <label class="state-control" for="stateSelect">预览状态
-              <select id="stateSelect">
-                <option value="ready">正常预览</option>
-                <option value="loading">正在准备</option>
-                <option value="denied">摄像头未允许</option>
-                <option value="unavailable">没有可用摄像头</option>
-                <option value="network">模型加载失败</option>
-                <option value="nohand">没有看到小手</option>
-                <option value="resume">回来继续玩</option>
-              </select>
-            </label>
-            <label class="checkbox-control"><input id="showGuide" type="checkbox" checked>显示手部示意</label>
+            <label class="checkbox-control"><input id="showGuide" type="checkbox" checked>显示真实手部关键点</label>
+            <label class="checkbox-control"><input id="showCamera" type="checkbox">显示相机小窗</label>
           </div>
-          <p class="simulation-note">状态切换仅用于预览；不代表已开启摄像头或运行 AI。</p>
-          <a class="original-link" href="http://127.0.0.1:8765/" target="_blank" rel="noopener">打开原版（真实摄像头）</a>
+          <p id="cameraStatus" class="simulation-note">摄像头未开启</p>
+          <a class="original-link" href="./LESSON.md" target="_blank" rel="noopener">打开 18 分钟老师手册</a>
           <div class="teaching-notes">
             <h3>每一步加了什么？</h3>
-            <p><b>1 找到小手：</b>正式版由 AI 估计手指位置；这里用鼠标演示位置。</p>
+            <p><b>1 找到小手：</b>摄像头模式由 AI 估计 21 个手部关键点；鼠标模式不使用 AI。</p>
             <p><b>2 魔法轨迹：</b>程序记下刚才的位置，画出一条彩色线。</p>
             <p><b>3 第一个水果：</b>加入一个大水果，手指划过就切开。</p>
             <p><b>4 水果派对：</b>加入更多水果和庆祝效果，不设炸弹、扣分或倒计时。</p>
-            <p class="honesty-note">这些步骤提前准备好了。动画和规则由程序完成，不是现场训练模型，也不是 AI 实时生成画面。</p>
+            <p class="honesty-note">这些步骤提前准备好了，点“下一步”逐个加入功能。动画和规则由程序完成，不是现场训练模型，也不是 AI 实时生成画面。</p>
           </div>
+          <p class="teacher-intro">给 AI 的示范指令：做一个大西瓜，让我的食指轻轻划过时，把西瓜切成两半。请让水果等我，不要倒计时。</p>
         </div>
       </details>
     </footer>

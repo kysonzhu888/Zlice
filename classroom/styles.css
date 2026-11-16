@@ -172,3 +172,6 @@ p, h1, h2, h3 { margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+.camera-preview { position: absolute; right: 16px; bottom: 16px; width: 160px; height: 120px; object-fit: cover; transform: scaleX(-1); border: 3px solid white; border-radius: 16px; z-index: 4; pointer-events: none; }
+@media (max-width: 760px) { .page-header { flex-wrap: wrap; } .header-actions { margin-left: auto; } }
