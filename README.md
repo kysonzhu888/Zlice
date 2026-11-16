@@ -2,6 +2,30 @@
 
 A browser-based fruit-slicing game controlled by webcam hand tracking.
 
+## Preschool classroom edition
+
+This fork adds a Chinese classroom edition for children around age four in
+[`classroom/`](classroom/). The original game below remains at the repository root.
+The classroom has four teacher-controlled stages: real hand landmarks, a rainbow
+trail, one large watermelon, and a three-fruit party. It has no bombs, countdown,
+penalties, or fast-swipe requirement. Mouse mode is clearly labeled as non-AI.
+
+Run `python3 classroom/serve.py`, then open `http://127.0.0.1:8767/` in your browser.
+On macOS you can also double-click `classroom/启动课堂.command`.
+Use a modern browser with camera permission; the local server needs Python 3.
+Runtime JS, WASM, and model weights are bundled, so the classroom needs no CDN,
+account, API key, or remote inference service. Camera frames remain in the browser.
+
+The [18-minute teacher guide](classroom/LESSON.md) contains an age-appropriate
+script, classroom setup, fallback steps, and four sample AI coding prompts.
+The stages are prepared examples, not a claim of live code generation or training.
+The accepted mouse prototype is retained in [`prototype/`](prototype/).
+
+To build the portable ZIP, run `python3 classroom/package-classroom.py`.
+See [third-party notices](classroom/THIRD_PARTY_NOTICES.md) for upstream licenses,
+fixed versions, and asset checksums. Run `npm ci --ignore-scripts && npm test`
+for camera lifecycle, fruit rules, and original game tests.
+
 ---
 
 ## Overview
