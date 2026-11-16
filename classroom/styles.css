@@ -58,7 +58,7 @@ p, h1, h2, h3 { margin: 0; }
 .step-number { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: #fff8; font-size: 19px; }
 .stage-navigation button[aria-current="step"] { background: var(--leaf); color: var(--white); }
 .stage-navigation button[aria-current="step"] .step-number { background: var(--mango); color: var(--ink); }
-.playfield-wrap { position: relative; min-height: 0; overflow: hidden; border-radius: 30px; background: var(--sky); isolation: isolate; }
+.playfield-wrap { position: relative; min-height: 0; overflow: clip; border-radius: 30px; background: var(--sky); isolation: isolate; }
 .playfield-wrap::before {
   content: "";
   position: absolute;
