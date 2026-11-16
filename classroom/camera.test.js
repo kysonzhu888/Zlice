@@ -26,8 +26,9 @@ function setup(overrides = {}) {
   };
   const camera = createCamera({ video, onStatus: value => statuses.push(value),
     onFrame: value => frames.push(value) }, deps);
-  const tick = (elapsed = 50) => {
-    clock += elapsed; video.currentTime += elapsed / 1000;
+  const tick = (elapsed = 50, advanceVideo = true) => {
+    clock += elapsed;
+    if (advanceVideo) video.currentTime += elapsed / 1000;
     const queued = [...callbacks.values()]; callbacks.clear();
     queued.forEach(callback => callback(clock));
   };
@@ -127,6 +128,34 @@ describe('classroom camera lifecycle', () => {
     expect(s.track.stop).toHaveBeenCalledOnce(); expect(s.model.close).toHaveBeenCalledOnce();
     await s.camera.start(); expect(s.statuses.at(-1).state).toBe('ready'); s.camera.stop();
   });
+
+  it('cancels pending video playback without publishing ready later', async () => {
+    const playback = deferred(); const s = setup(); s.video.play.mockReturnValue(playback.promise);
+    const starting = s.camera.start(); await flush(); expect(s.video.srcObject).toBe(s.stream);
+    s.camera.stop(); await starting; playback.resolve(); await flush();
+    expect(s.statuses.some(item => item.state === 'ready')).toBe(false);
+    expect(s.video.srcObject).toBeNull(); expect(s.track.stop).toHaveBeenCalledOnce();
+  });
+
+  it('does not let an old permission result interrupt a newer ready session', async () => {
+    const permission = deferred(); const s = setup();
+    const oldTrack = { stop: vi.fn() }; const oldStream = { getTracks: () => [oldTrack] };
+    const oldModel = { close: vi.fn() };
+    s.deps.loadModel.mockResolvedValueOnce(oldModel);
+    s.deps.mediaDevices.getUserMedia.mockReturnValueOnce(permission.promise);
+    const oldStart = s.camera.start(); await flush(); s.camera.stop(); await oldStart;
+    await s.camera.start(); permission.resolve(oldStream); await flush();
+    expect(oldTrack.stop).toHaveBeenCalledOnce(); expect(oldModel.close).toHaveBeenCalledOnce();
+    expect(s.video.srcObject).toBe(s.stream); expect(s.track.stop).not.toHaveBeenCalled();
+    expect(s.model.close).not.toHaveBeenCalled(); s.camera.stop();
+  });
+
+  it('clears stale landmarks when the video stops providing fresh frames', async () => {
+    const s = setup(); s.model.detectForVideo.mockReturnValue({ landmarks: [[{ x: .5, y: .5 }]] });
+    await s.camera.start(); s.tick(); s.tick(310, false);
+    expect(s.model.detectForVideo).toHaveBeenCalledOnce();
+    expect(s.frames.at(-1)).toEqual({ landmarks: null }); s.camera.stop();
+  });
 });
 
 describe('local model loader', () => {
@@ -140,5 +169,16 @@ describe('local model loader', () => {
     expect(resolve.mock.calls[0][0]).toContain('/classroom/vendor/mediapipe/wasm');
     expect(create.mock.calls[0][1].baseOptions.modelAssetPath).toContain('/classroom/models/hand_landmarker.task');
     expect(create.mock.calls[0][1].runningMode).toBe('VIDEO');
+  });
+
+  it('does not initialize the CPU fallback after cancellation', async () => {
+    const gpu = deferred(); let isActive = true;
+    const create = vi.fn(() => gpu.promise);
+    const loading = loadHandModel({ isActive: () => isActive,
+      importVision: async () => ({ FilesetResolver: { forVisionTasks: async () => ({}) },
+        HandLandmarker: { createFromOptions: create } }) });
+    await flush(); isActive = false; gpu.reject(new Error('GPU unavailable'));
+    await expect(loading).rejects.toHaveProperty('name', 'AbortError');
+    expect(create).toHaveBeenCalledOnce();
   });
 });
