@@ -20,7 +20,7 @@ export class ClassroomGame {
   }
   setStage(stage) { this.stage = Math.max(0, Math.min(3, stage)); this.reset(); }
   resize(width, height) { this.width = width; this.height = height; this.clearPointer(); }
-  clearPointer() { this.pointer = null; this.trail = []; }
+  clearPointer() { this.pointer = null; this.strokeAnchor = null; this.trail = []; }
   radius() { return Math.min(86, Math.max(32, this.width * .069), this.height * .18); }
   position(fruit) {
     return { x: this.width * fruit.x, y: this.height * fruit.y +
@@ -34,17 +34,22 @@ export class ClassroomGame {
   }
   move(point, active) {
     if (!active) { this.clearPointer(); return []; }
-    const previous = this.pointer;
+    const previous = this.strokeAnchor;
     this.pointer = { ...point, time: this.time };
     this.trail.push(this.pointer);
     if (this.trail.length > 36) this.trail.shift();
-    if (!previous || Math.hypot(point.x - previous.x, point.y - previous.y) < 2) return [];
+    if (!previous) { this.strokeAnchor = this.pointer; return []; }
+    if (Math.hypot(point.x - previous.x, point.y - previous.y) < 2) return [];
+    this.strokeAnchor = this.pointer;
     const hits = [];
     for (const fruit of this.fruits) {
-      if (fruit.availableAt > this.time) continue;
       const position = this.position(fruit);
+      const outside = Math.hypot(point.x - position.x, point.y - position.y) > this.radius() + 20;
+      if (fruit.armed === false) { if (outside) fruit.armed = true; continue; }
+      if (fruit.availableAt > this.time) continue;
       if (segmentDistance(position, previous, point) > this.radius() + 12) continue;
       fruit.availableAt = this.time + 1.6;
+      fruit.armed = outside;
       this.collected++;
       hits.push({ ...position, type: fruit.type, radius: this.radius() });
     }

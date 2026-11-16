@@ -59,4 +59,21 @@ describe('preschool fruit rules', () => {
   it('handles zero-length collision segments without NaN', () => {
     expect(segmentDistance({ x: 3, y: 4 }, { x: 0, y: 0 }, { x: 0, y: 0 })).toBe(5);
   });
+  it('accumulates very gentle 1px movements across the whole fruit', () => {
+    const game = singleFruit();
+    for (let x = 300; x <= 700; x++) {
+      game.tick(.04, true); game.move({ x, y: 295 }, true);
+    }
+    expect(game.collected).toBe(1);
+  });
+  it('requires leaving the fruit before small tracking wiggles can collect it again', () => {
+    const game = singleFruit();
+    for (let frame = 0; frame < 120; frame++) {
+      game.tick(.04, true); game.move({ x: frame % 2 ? 503 : 500, y: 295 }, true);
+    }
+    expect(game.collected).toBe(1);
+    game.move({ x: 800, y: 295 }, true);
+    game.move({ x: 400, y: 295 }, true);
+    expect(game.collected).toBe(2);
+  });
 });
